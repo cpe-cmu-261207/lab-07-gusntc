@@ -8,13 +8,79 @@ import {
 } from "@tabler/icons";
 
 export default function Home() {
-  const deleteTodo = (idx) => {};
+  const [todoInput, settodoInput] = useState("");
+  const [todos, settodos] = useState([]); //ประกาศเป็น array มาเก็บตัวแปร
 
-  const markTodo = (idx) => {};
+  const deleteTodo = (idx) => {
+    todos.splice(idx, 1);
+    const newTodos = [...todos];
+    settodos(newTodos);
+  };
 
-  const moveUp = (idx) => {};
+  const markTodo = (idx) => {
+    todos[idx].complete = !todos[idx].complete; //todos is array
+    settodos([...todos]);
+  };
 
-  const moveDown = (idx) => {};
+  const moveUp = (idx) => {
+    if (idx === 0) return; //no list todo
+    const title = todos[idx].title; //keep title of button idx
+    const complete = todos[idx].complete;
+
+    todos[idx].title = todos[idx - 1].title;
+    todos[idx].complete = todos[idx - 1].complete;
+
+    todos[idx - 1].title = title;
+    todos[idx - 1].complete = complete;
+    settodos([...todos]);
+  };
+
+  const moveDown = (idx) => {
+    if (idx === todos.length - 1) return; //no list todo
+    const title = todos[idx].title; //keep title of button idx
+    const complete = todos[idx].complete;
+
+    todos[idx].title = todos[idx + 1].title;
+    todos[idx].complete = todos[idx + 1].complete;
+
+    todos[idx + 1].title = title;
+    todos[idx + 1].complete = complete;
+    settodos([...todos]);
+  };
+
+  const Onkeyuphandler = (event) => {
+    if (event.key !== "Enter") return;
+    if (todoInput === "") {
+      alert("Todo cannot be empty");
+    } else {
+      const newTodos = [{ title: todoInput, complete: false }, ...todos]; //ทำarrayมาเปลี่ยนค่าใหม่ทุกครั้ง
+      settodos(newTodos);
+      settodoInput("");
+    }
+  };
+
+  const [isFirstRender, setIsFirstRender] = useState(true);
+
+  useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    } else {
+      saveTodos();
+    }
+  }, [todos]);
+
+  useEffect(() => {
+    const todoStr = localStorage.getItem("react-todos");
+    if (todoStr === null)
+      settodos([]); // not found // undefined,null,0," " == same ;
+    else settodos(JSON.parse(todoStr)); // found
+  }, []);
+
+  const saveTodos = () => {
+    const todoStr = JSON.stringify(todos); //obj->String
+    localStorage.setItem("react-todos", todoStr);
+  };
 
   return (
     <div>
@@ -28,40 +94,41 @@ export default function Home() {
         <input
           className="form-control mb-1 fs-4"
           placeholder="insert todo here..."
+          onChange={(event) => {
+            settodoInput(event.target.value);
+          }}
+          value={todoInput}
+          onKeyUp={Onkeyuphandler}
         />
-        {/* Todos */}
-        {/* Example 1 */}
-        <div className="border-bottom p-1 py-2 fs-2 d-flex gap-2">
-          <span className="me-auto">Todo</span>
-        </div>
-        {/* Example 2 */}
-        <div className="border-bottom p-1 py-2 fs-2 d-flex gap-2">
-          <span className="me-auto">Todo with buttons</span>
+        {/* {todoInput} */}
 
-          <button className="btn btn-success">
-            <IconCheck />
-          </button>
-          <button className="btn btn-secondary">
-            <IconArrowUp />
-          </button>
-          <button className="btn btn-secondary">
-            <IconArrowDown />
-          </button>
-          <button className="btn btn-danger">
-            <IconTrash />
-          </button>
-        </div>
+        <ul>
+          {todos.map((todo, idx) => (
+            <Todo
+              title={todo.title}
+              complete={todo.complete}
+              key={idx}
+              markBtn={() => markTodo(idx)}
+              deleteBtn={() => deleteTodo(idx)}
+              moveupBtn={() => moveUp(idx)}
+              movedownBtn={() => moveDown(idx)}
+            />
+          ))}
+        </ul>
 
-        {/* summary section */}
         <p className="text-center fs-4">
-          <span className="text-primary">All (2) </span>
-          <span className="text-warning">Pending (2) </span>
-          <span className="text-success">Completed (0)</span>
+          <span className="text-primary">All ({todos.length}) </span>
+          <span className="text-warning">
+            Pending ({todos.filter((todo) => todo.complete === false).length}){" "}
+          </span>
+          <span className="text-success">
+            Completed ({todos.filter((todo) => todo.complete === true).length})
+          </span>
         </p>
 
         {/* Made by section */}
         <p className="text-center mt-3 text-muted fst-italic">
-          made by Chayanin Suatap 12345679
+          made by Natacha Rungbanpant 640610629
         </p>
       </div>
     </div>
